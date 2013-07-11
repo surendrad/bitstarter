@@ -70,6 +70,26 @@ var getUrlContent = function(url, checksfile) {
     xhr.send();
 };
 
+/*
+ Uses restler calls to fetch the HTML Content.
+*/
+var getUrlContent2 = function(url, checksfile) {
+   var sys = require('util');
+   var outfile = "index.html"
+   rest = require('restler');
+   rest.get(url).on('complete', function(result) {
+            if (result instanceof Error) {
+                sys.puts('Error: ' + result.message);
+                this.retry(5000); // try again after 5 sec
+            } else {
+                fs.writeFileSync(outfile, result);
+                var checkJson = checkHtmlFile(program.file, program.checks); 
+                var outJson = JSON.stringify(checkJson, null, 4);
+                console.log(outJson);
+            }
+   });
+};
+
 var checkHtmlFile = function(htmlfile, checksfile) {
     $ = cheerioHtmlFile(htmlfile);
     var checks = loadChecks(checksfile).sort();
@@ -110,8 +130,7 @@ if(require.main == module) {
         var outJson = JSON.stringify(checkJson, null, 4);
         console.log(outJson);
     } else {
-        console.log("URL is "+program.url);
-        getUrlContent(program.url);
+        getUrlContent2(program.url);
     }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
